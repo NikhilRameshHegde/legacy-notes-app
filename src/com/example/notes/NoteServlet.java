@@ -9,21 +9,23 @@ import java.util.Iterator;
 
 public class NoteServlet extends HttpServlet {
 
-    // === GET ===
-    public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        PrintWriter out = resp.getWriter();
-        resp.setContentType("text/plain");
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        PrintWriter out = response.getWriter();
+        response.setContentType("text/plain");
 
-        String action = req.getParameter("action");
+        String action = request.getParameter("action");
 
         if ("list".equals(action)) {
-            for (Note n : NoteManager.getAllNotes()) {
-                out.println("ID: " + n.getId() + ", Title: " + n.getTitle());
+            // List all notes
+            Iterator it = NoteManager.getAllNotes().iterator();
+            while (it.hasNext()) {
+                Note note = (Note) it.next();
+                out.println("ID: " + note.getId() + ", Title: " + note.getTitle());
             }
-        } 
-        else if ("get".equals(action)) {
+        } else if ("get".equals(action)) {
+            // Get a single note by ID
             try {
-                long id = Long.parseLong(req.getParameter("id"));
+                long id = Long.parseLong(request.getParameter("id"));
                 Note note = NoteManager.getNote(id);
                 if (note != null) {
                     out.println("Title: " + note.getTitle());
@@ -32,65 +34,35 @@ public class NoteServlet extends HttpServlet {
                     out.println("Error: Note not found.");
                 }
             } catch (Exception e) {
-                out.println("Error: Invalid ID.");
+                out.println("Error: Invalid ID format.");
             }
-        }
-        else {
-            out.println("Legacy Notes DB App");
-            out.println("?action=list");
-            out.println("?action=get&id=1");
+        } else {
+            out.println("Welcome to the Legacy Notes App! Use ?action=list or ?action=get&id=1");
         }
     }
 
-    // === POST ===
-    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        PrintWriter out = resp.getWriter();
-        resp.setContentType("text/plain");
-
-        String action = req.getParameter("action");
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        PrintWriter out = response.getWriter();
+        response.setContentType("text/plain");
+        
+        String action = request.getParameter("action");
 
         if ("create".equals(action)) {
-            String title = req.getParameter("title");
-            String content = req.getParameter("content");
-            if (title == null || content == null) {
-                out.println("Error: title and content required");
-                return;
-            }
-            Note n = new Note(title, content);
-            NoteManager.addNote(n);
-            out.println("Success: Note created with ID " + n.getId());
-        }
-        else if ("update".equals(action)) {
+            String title = request.getParameter("title");
+            String content = request.getParameter("content");
+            Note newNote = new Note(title, content);
+            NoteManager.addNote(newNote);
+            out.println("Success: Note created with ID " + newNote.getId());
+        } else if ("delete".equals(action)) {
             try {
-                long id = Long.parseLong(req.getParameter("id"));
-                String title = req.getParameter("title");
-                String content = req.getParameter("content");
-
-                Note note = NoteManager.getNote(id);
-                if (note == null) {
-                    out.println("Error: Note not found");
-                    return;
-                }
-                if (title != null && title.trim().length() > 0) note.setTitle(title);
-                if (content != null && content.trim().length() > 0) note.setContent(content);
-
-                NoteManager.updateNote(note);
-                out.println("Success: Note " + id + " updated");
-            } catch (Exception e) {
-                out.println("Error: Invalid input");
-            }
-        }
-        else if ("delete".equals(action)) {
-            try {
-                long id = Long.parseLong(req.getParameter("id"));
+                long id = Long.parseLong(request.getParameter("id"));
                 NoteManager.deleteNote(id);
-                out.println("Success: Note " + id + " deleted");
+                out.println("Success: Note with ID " + id + " deleted.");
             } catch (Exception e) {
-                out.println("Error: Invalid ID");
+                out.println("Error: Invalid ID format.");
             }
-        }
-        else {
-            out.println("Error: Unknown action");
+        } else {
+            out.println("Error: Invalid POST action. Use 'create' or 'delete'.");
         }
     }
 }
