@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.Iterator;
 
 public class NoteServlet extends HttpServlet {
@@ -17,7 +18,9 @@ public class NoteServlet extends HttpServlet {
         String action = req.getParameter("action");
 
         if ("list".equals(action)) {
-            for (Note n : NoteManager.getAllNotes()) {
+            Iterator it = NoteManager.getAllNotes().iterator();
+            while (it.hasNext()) {
+                Note n = (Note) it.next();
                 out.println("ID: " + n.getId() + ", Title: " + n.getTitle());
             }
         } 
@@ -35,10 +38,31 @@ public class NoteServlet extends HttpServlet {
                 out.println("Error: Invalid ID.");
             }
         }
+        // NEW: Search endpoint
+        else if ("search".equals(action)) {
+            String query = req.getParameter("query");
+            if (query == null || query.trim().length() == 0) {
+                out.println("Error: search query required.");
+                return;
+            }
+            out.println("Search Results for: '" + query + "'");
+            Iterator it = NoteManager.searchNotes(query).iterator();
+            while(it.hasNext()){
+                Note n = (Note) it.next();
+                 out.println("ID: " + n.getId() + ", Title: " + n.getTitle());
+            }
+        }
+        // NEW: Stats endpoint
+        else if ("stats".equals(action)) {
+            int count = NoteManager.getNoteCount();
+            out.println("Total notes: " + count);
+        }
         else {
             out.println("Legacy Notes DB App");
             out.println("?action=list");
             out.println("?action=get&id=1");
+            out.println("?action=search&query=java");
+            out.println("?action=stats");
         }
     }
 
@@ -89,8 +113,23 @@ public class NoteServlet extends HttpServlet {
                 out.println("Error: Invalid ID");
             }
         }
+        // NEW: Bulk delete endpoint
+        else if ("bulk_delete".equals(action)) {
+            String idsParam = req.getParameter("ids"); // e.g., "1,3,4"
+            if (idsParam == null || idsParam.trim().length() == 0) {
+                out.println("Error: 'ids' parameter is required.");
+                return;
+            }
+            try {
+                String[] ids = idsParam.split(",");
+                NoteManager.deleteMultipleNotes(ids);
+                out.println("Success: Notes with IDs " + idsParam + " deleted.");
+            } catch (Exception e) {
+                 out.println("Error: Invalid IDs provided.");
+            }
+        }
         else {
-            out.println("Error: Unknown action");
+            out.println("Error: Unknown POST action");
         }
     }
 }

@@ -7,5 +7,12 @@ CREATE TABLE IF NOT EXISTS notes (
     content TEXT
 );
 
+-- More notes for better testing
 INSERT INTO notes (title, content) 
 VALUES ('First Note', 'This is the content of the first note.');
+INSERT INTO notes (title, content) 
+VALUES ('Second Note', 'This is a note about Java.');
+INSERT INTO notes (title, content) 
+VALUES ('Meeting Ideas', 'Discuss the new project architecture.');
+INSERT INTO notes (title, content) 
+VALUES ('Shopping List', 'Milk, bread, and Java coffee.');
